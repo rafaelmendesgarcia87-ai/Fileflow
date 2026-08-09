@@ -532,7 +532,7 @@ with tab3:
         <div class="pix-box">
             <h4>Chave Pix Oficial para Pagamento</h4>
             <p>Copie a chave abaixo e realize a transferência no app do seu banco:</p>
-            <div class="pix-key">{CHAVE_PIX_OFICIAL}</div>
+            <div class="pix-key">{8ded5989-4158-471d-a917-ca4ead431fd7}</div>
             <p style="color:#94A3B8; font-size:0.85rem;">Após realizar o Pix, seu servidor de {dados_plano['gb']} GB será ativado instantaneamente.</p>
         </div>
     """, unsafe_allow_html=True)
