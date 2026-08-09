@@ -259,3 +259,286 @@ col_stat1, col_stat2, col_stat3 = st.columns(3)
 col_stat1.metric(label="Status dos Servidores", value="ONLINE", delta="100% SLA")
 col_stat2.metric(label="Latencia Média da IA", value="18 ms", delta="-2 ms")
 col_stat3.metric(label="Nós Ativos na Nuvem", value="1.024", delta="+12 hoje")
+import streamlit as st
+import google.generativeai as genai
+import time
+
+# ---------------------------------------------------------
+# CONFIGURAÇÃO DA PÁGINA (ESTILO APLICATIVO FUTURISTA)
+# ---------------------------------------------------------
+st.set_page_config(
+    page_title="FileFlow v1.0 | Neural Cloud OS",
+    page_icon="⚡",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Estilização CSS Cyberpunk / Futurista Avançada
+st.markdown("""
+    <style>
+    /* Estilo Global */
+    .stApp {
+        background: #030712;
+        color: #F3F4F6;
+        font-family: 'Segoe UI', Roboto, Helvetica, sans-serif;
+    }
+    
+    /* Topo do App / Hero Header */
+    .app-header {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
+        border: 1px solid rgba(0, 255, 204, 0.2);
+        border-radius: 20px;
+        padding: 25px;
+        text-align: center;
+        box-shadow: 0 0 25px rgba(0, 255, 204, 0.1);
+        margin-bottom: 25px;
+    }
+    .app-title {
+        font-size: 2.6rem;
+        font-weight: 900;
+        letter-spacing: 2px;
+        background: linear-gradient(90deg, #00FFCC, #3B82F6, #9333EA);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+    }
+    .app-tagline {
+        color: #94A3B8;
+        font-size: 1rem;
+        margin-top: 5px;
+    }
+
+    /* Cards Futuristas de Servidores / Planos */
+    .server-card {
+        background: rgba(15, 23, 42, 0.7);
+        border: 1px solid #1E293B;
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    .server-card-vip {
+        background: rgba(15, 23, 42, 0.95);
+        border: 2px solid #00FFCC;
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 0 30px rgba(0, 255, 204, 0.25);
+        position: relative;
+    }
+    .badge-promo {
+        background: #EC4899;
+        color: white;
+        font-weight: bold;
+        font-size: 0.75rem;
+        padding: 4px 10px;
+        border-radius: 12px;
+        position: absolute;
+        top: -10px;
+        right: 15px;
+    }
+    .server-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #FFFFFF;
+    }
+    .server-quota {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #00FFCC;
+        margin: 10px 0;
+    }
+    .server-price {
+        font-size: 1.2rem;
+        color: #E2E8F0;
+        font-weight: 600;
+    }
+
+    /* Painel do Pix */
+    .pix-box {
+        background: rgba(6, 78, 59, 0.3);
+        border: 1px solid #059669;
+        border-radius: 12px;
+        padding: 15px;
+        margin-top: 15px;
+        text-align: center;
+    }
+    .pix-key {
+        font-family: monospace;
+        background: #022C22;
+        color: #34D399;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        display: inline-block;
+        margin: 8px 0;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# REGISTRO DE PLANOS & SERVIDORES DEDICADOS
+# ---------------------------------------------------------
+CHAVE_PIX_OFICIAL = "SUA_CHAVE_PIX_AQUI"  # <- Insira sua chave Pix (CPF ou Aleatória) aqui!
+
+SERVIDORES_PLANOS = {
+    "Member": {"gb": 10, "preco": "R$ 5,00/mês", "promo": None},
+    "VIP": {"gb": 50, "preco": "R$ 10,00/mês", "promo": None},
+    "Mega VIP": {"gb": 200, "preco": "R$ 40,00/mês", "promo": None},
+    "VIP Plus": {"gb": 500, "preco": "R$ 60,00/mês", "promo": "40% OFF (De R$ 100 por R$ 60)"}
+}
+
+# ---------------------------------------------------------
+# PAINEL LATERAL (CONFIGURAÇÃO DE CONEXÃO E IA)
+# ---------------------------------------------------------
+with st.sidebar:
+    st.image("https://img.icons8.com/neon/96/server.png", width=64)
+    st.title("FileFlow v1.0")
+    st.caption("Painel do Cliente & Servidores")
+    
+    st.subheader("🔑 Conexão com a IA")
+    api_key_input = st.text_input("Chave API do Gemini", type="password", help="Insira sua chave do Google AI Studio para ativar o motor de IA.")
+    
+    if api_key_input:
+        genai.configure(api_key=api_key_input)
+        st.success("IA Conectada e Ativa ⚡")
+    else:
+        st.warning("Insira a Chave API para liberar a IA.")
+
+    st.divider()
+    st.markdown("### 🖥️ Status do Servidor Atual")
+    st.info("Plano Atual: **Gratuito (Demonstração)**\n\nEspaço Usado: **0.1 GB / 2.0 GB**")
+
+# ---------------------------------------------------------
+# CABEÇALHO DO APLICATIVO
+# ---------------------------------------------------------
+st.markdown("""
+    <div class="app-header">
+        <h1 class="app-title">FILEFLOW // NEURAL CLOUD OS</h1>
+        <p class="app-tagline">Gerenciador de Arquivos Autônomo & Processador Inteligente v1.0</p>
+    </div>
+""", unsafe_allow_html=True)
+
+# Tabs / Navegação simplificada do Consumidor
+tab1, tab2, tab3 = st.tabs(["⚡ Meu Servidor & IA", "🚀 Upgrade de Servidor (Planos)", "💳 Pagamento via Pix"])
+
+# ---------------------------------------------------------
+# TAB 1: MEU SERVIDOR & IA (USO DO APP)
+# ---------------------------------------------------------
+with tab1:
+    col_upload, col_ia = st.columns([1, 1])
+    
+    with col_upload:
+        st.subheader("📂 Enviar Arquivo para o Servidor")
+        arquivo = st.file_uploader("Arraste seus documentos ou imagens para armazenar e analisar:", type=["pdf", "txt", "png", "jpg", "csv"])
+        
+        if arquivo:
+            st.success(f"Arquivo `{arquivo.name}` enviado com sucesso para o seu servidor!")
+            st.metric(label="Tamanho do Arquivo", value=f"{round(arquivo.size / (1024*1024), 2)} MB")
+
+    with col_ia:
+        st.subheader("🤖 IA Processadora de Arquivos")
+        instrucao = st.text_area("O que você quer que a IA faça com seus arquivos armazenados?", placeholder="Exemplo: Resuma este documento e extraia os tópicos principais.")
+        
+        if st.button("Executar Processamento 🚀", use_container_width=True):
+            if not api_key_input:
+                st.error("Por favor, informe a Chave API na barra lateral para usar a IA.")
+            else:
+                with st.spinner("Conectando ao servidor neural..."):
+                    try:
+                        model = genai.GenerativeModel('gemini-2.5-flash')
+                        resposta = model.generate_content(instrucao if instrucao else "Análise do sistema FileFlow OK.")
+                        st.markdown("### 📝 Resposta da IA:")
+                        st.write(resposta.text)
+                    except Exception as e:
+                        st.error(f"Erro ao processar com a IA: {e}")
+
+# ---------------------------------------------------------
+# TAB 2: SELEÇÃO DE SERVIDORES / PLANOS
+# ---------------------------------------------------------
+with tab2:
+    st.subheader("🌐 Escolha a Capaciade do seu Servidor Dedicado")
+    st.write("Selecione um plano para expandir seu armazenamento e ativar servidores dedicados.")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.markdown(f"""
+            <div class="server-card">
+                <div class="server-title">MEMBER</div>
+                <div class="server-quota">10 GB</div>
+                <div class="server-price">{SERVIDORES_PLANOS['Member']['preco']}</div>
+                <p style="color:#94A3B8; font-size:0.85rem; margin-top:10px;">Servidor Standard</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("Assinar Member", key="p_member", use_container_width=True):
+            st.session_state['plano_selecionado'] = "Member"
+            st.info("Vá para a aba 'Pagamento via Pix' para finalizar.")
+
+    with col2:
+        st.markdown(f"""
+            <div class="server-card">
+                <div class="server-title">VIP</div>
+                <div class="server-quota">50 GB</div>
+                <div class="server-price">{SERVIDORES_PLANOS['VIP']['preco']}</div>
+                <p style="color:#94A3B8; font-size:0.85rem; margin-top:10px;">Servidor Prioritário</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("Assinar VIP", key="p_vip", use_container_width=True):
+            st.session_state['plano_selecionado'] = "VIP"
+            st.info("Vá para a aba 'Pagamento via Pix' para finalizar.")
+
+    with col3:
+        st.markdown(f"""
+            <div class="server-card">
+                <div class="server-title">MEGA VIP</div>
+                <div class="server-quota">200 GB</div>
+                <div class="server-price">{SERVIDORES_PLANOS['Mega VIP']['preco']}</div>
+                <p style="color:#94A3B8; font-size:0.85rem; margin-top:10px;">Servidor Ultra Rápido</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("Assinar Mega VIP", key="p_mega", use_container_width=True):
+            st.session_state['plano_selecionado'] = "Mega VIP"
+            st.info("Vá para a aba 'Pagamento via Pix' para finalizar.")
+
+    with col4:
+        st.markdown(f"""
+            <div class="server-card-vip">
+                <div class="badge-promo">40% OFF</div>
+                <div class="server-title" style="color:#00FFCC;">VIP PLUS</div>
+                <div class="server-quota">500 GB</div>
+                <div class="server-price">{SERVIDORES_PLANOS['VIP Plus']['preco']}</div>
+                <p style="color:#94A3B8; font-size:0.85rem; margin-top:10px;">Servidor Dedicado Máximo</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("Assinar VIP Plus", key="p_plus", use_container_width=True):
+            st.session_state['plano_selecionado'] = "VIP Plus"
+            st.info("Vá para a aba 'Pagamento via Pix' para finalizar.")
+
+# ---------------------------------------------------------
+# TAB 3: PAGAMENTO VIA PIX SIMPLIFICADO
+# ---------------------------------------------------------
+with tab3:
+    st.subheader("💳 Checkout Instantâneo via Pix")
+    
+    plano_atual = st.session_state.get('plano_selecionado', 'VIP Plus')
+    dados_plano = SERVIDORES_PLANOS[plano_atual]
+    
+    st.markdown(f"### Plano Selecionado: **{plano_atual}** ({dados_plano['gb']} GB)")
+    st.markdown(f"**Valor a pagar:** `{dados_plano['preco']}`")
+    
+    st.markdown(f"""
+        <div class="pix-box">
+            <h4>Chave Pix Oficial para Pagamento</h4>
+            <p>Copie a chave abaixo e realize a transferência no app do seu banco:</p>
+            <div class="pix-key">{CHAVE_PIX_OFICIAL}</div>
+            <p style="color:#94A3B8; font-size:0.85rem;">Após realizar o Pix, seu servidor de {dados_plano['gb']} GB será ativado instantaneamente.</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button("Confirmar Pagamento e Ativar Servidor ⚡", type="primary", use_container_width=True):
+        with st.spinner("Verificando transação Pix no banco..."):
+            time.sleep(2)
+            st.balloons()
+            st.success(f"Pagamento confirmado! O seu Servidor Dedicado ({plano_atual} - {dados_plano['gb']} GB) está 100% ONLINE!")
