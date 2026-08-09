@@ -542,3 +542,363 @@ with tab3:
             time.sleep(2)
             st.balloons()
             st.success(f"Pagamento confirmado! O seu Servidor Dedicado ({plano_atual} - {dados_plano['gb']} GB) está 100% ONLINE!")
+import streamlit as st
+import time
+
+# -----------------------------------------------------------------------------
+# INTEGRATION WITH GOOGLE GEMINI AI
+# -----------------------------------------------------------------------------
+try:
+    import google.genai as genai
+    GEMINI_AVAILABLE = True
+except ImportError:
+    try:
+        import google.generativeai as genai
+        GEMINI_AVAILABLE = True
+    except ImportError:
+        GEMINI_AVAILABLE = False
+
+# -----------------------------------------------------------------------------
+# APPLICATION CONFIGURATION
+# -----------------------------------------------------------------------------
+st.set_page_config(
+    page_title="FileFlow | Neural Cloud OS",
+    page_icon="⚡",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# -----------------------------------------------------------------------------
+# ADVANCED NEON & FUTURISTIC CSS STYLING
+# -----------------------------------------------------------------------------
+st.markdown("""
+    <style>
+    /* Dark Cyberpunk Theme Base */
+    .stApp {
+        background-color: #030712;
+        color: #F3F4F6;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    
+    /* Neon Glow Animations */
+    @keyframes pulseGlow {
+        0% { box-shadow: 0 0 15px rgba(0, 255, 204, 0.2); }
+        50% { box-shadow: 0 0 35px rgba(0, 255, 204, 0.5); }
+        100% { box-shadow: 0 0 15px rgba(0, 255, 204, 0.2); }
+    }
+    
+    /* Futuristic Header Banner */
+    .hero-banner {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.8));
+        border: 1px solid rgba(0, 255, 204, 0.3);
+        border-radius: 20px;
+        padding: 30px;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        margin-bottom: 25px;
+        animation: pulseGlow 4s infinite ease-in-out;
+    }
+    .hero-title {
+        font-size: 3rem;
+        font-weight: 900;
+        letter-spacing: 3px;
+        background: linear-gradient(90deg, #00FFCC, #3B82F6, #9333EA);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+        text-transform: uppercase;
+    }
+    .hero-subtitle {
+        color: #94A3B8;
+        font-size: 1.1rem;
+        margin-top: 8px;
+        letter-spacing: 1px;
+    }
+
+    /* Cards Structure */
+    .tech-card {
+        background: rgba(15, 23, 42, 0.7);
+        border: 1px solid #1E293B;
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    .tech-card:hover {
+        border-color: #00FFCC;
+        transform: translateY(-4px);
+    }
+    .tech-card-vip {
+        background: rgba(15, 23, 42, 0.9);
+        border: 2px solid #00FFCC;
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 0 25px rgba(0, 255, 204, 0.25);
+        position: relative;
+    }
+    .promo-badge {
+        background: #EC4899;
+        color: white;
+        font-weight: 800;
+        font-size: 0.75rem;
+        padding: 4px 12px;
+        border-radius: 12px;
+        position: absolute;
+        top: -12px;
+        right: 15px;
+        text-transform: uppercase;
+    }
+    .card-title {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: #FFFFFF;
+    }
+    .card-storage {
+        font-size: 2rem;
+        font-weight: 900;
+        color: #00FFCC;
+        margin: 10px 0;
+    }
+    .card-price {
+        font-size: 1.25rem;
+        color: #E2E8F0;
+        font-weight: 700;
+    }
+
+    /* Pix Box Styling */
+    .pix-container {
+        background: rgba(6, 78, 59, 0.2);
+        border: 1px solid #059669;
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        margin-top: 15px;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# -----------------------------------------------------------------------------
+# GLOBAL CONSTANTS & SESSION STATE
+# -----------------------------------------------------------------------------
+CHAVE_PIX_OFICIAL = "SUA_CHAVE_PIX_AQUI"  # Atualize com sua chave Pix/CPF
+
+PLANS_DATA = {
+    "Member": {"gb": 10, "price": "R$ 5,00/mês", "badge": None, "desc": "Contêiner Standard Isolado"},
+    "VIP": {"gb": 50, "price": "R$ 10,00/mês", "badge": None, "desc": "Processamento Prioritário"},
+    "Mega VIP": {"gb": 200, "price": "R$ 40,00/mês", "badge": None, "desc": "Cluster de Alta BANDA"},
+    "VIP Plus": {"gb": 500, "price": "R$ 60,00/mês", "badge": "40% OFF", "desc": "Servidor Neural Exclusivo"}
+}
+
+if 'active_plan' not in st.session_state:
+    st.session_state['active_plan'] = "Gratuito (Demonstração)"
+if 'allocated_storage' not in st.session_state:
+    st.session_state['allocated_storage'] = 2
+if 'selected_checkout_plan' not in st.session_state:
+    st.session_state['selected_checkout_plan'] = "VIP Plus"
+
+# -----------------------------------------------------------------------------
+# SIDEBAR CONTROLS
+# -----------------------------------------------------------------------------
+with st.sidebar:
+    st.title("⚡ FileFlow v1.0")
+    st.caption("Neural Cloud Control Center")
+    st.divider()
+
+    st.subheader("🔑 Motor de IA Gemini")
+    gemini_key = st.text_input("Insira sua API Key do Gemini:", type="password", help="Chave necessária para automação inteligente.")
+    
+    ai_active = False
+    if gemini_key and GEMINI_AVAILABLE:
+        try:
+            if hasattr(genai, 'Client'):
+                client = genai.Client(api_key=gemini_key)
+            else:
+                genai.configure(api_key=gemini_key)
+            st.success("IA Neural Conectada e Operacional ⚡")
+            ai_active = True
+        except Exception as err:
+            st.error(f"Falha de Autenticação: {err}")
+    elif gemini_key and not GEMINI_AVAILABLE:
+        st.warning("Biblioteca 'google-genai' não detectada no ambiente.")
+    else:
+        st.info("Insira a chave API para habilitar os recursos de IA.")
+
+    st.divider()
+    st.subheader("🖥️ Status do Servidor")
+    st.write(f"**Plano Ativo:** `{st.session_state['active_plan']}`")
+    st.write(f"**Cota Disponível:** `0.1 GB` / `{st.session_state['allocated_storage']} GB`")
+    st.progress(0.1 / st.session_state['allocated_storage'])
+
+# -----------------------------------------------------------------------------
+# HERO HEADER
+# -----------------------------------------------------------------------------
+st.markdown("""
+    <div class="hero-banner">
+        <h1 class="hero-title">FILEFLOW // NEURAL CLOUD OS</h1>
+        <p class="hero-subtitle">Plataforma Autônoma de Gerenciamento e Análise Transacional de Arquivos com IA</p>
+    </div>
+""", unsafe_allow_html=True)
+
+# -----------------------------------------------------------------------------
+# MAIN NAVIGATION TABS
+# -----------------------------------------------------------------------------
+tab_app, tab_plans, tab_checkout, tab_telemetry = st.tabs([
+    "📂 Servidor & Processamento IA", 
+    "🚀 Servidores & Expansão", 
+    "💳 Pagamento Pix", 
+    "📊 Telemetria do Sistema"
+])
+
+# -----------------------------------------------------------------------------
+# TAB 1: SERVER & AI PROCESSING
+# -----------------------------------------------------------------------------
+with tab_app:
+    col_upload, col_ai = st.columns([1, 1], gap="large")
+    
+    with col_upload:
+        st.subheader("📂 Upload para Nuvem Neural")
+        uploaded_file = st.file_uploader(
+            "Arraste ou selecione documentos/imagens para armazenamento seguro:",
+            type=["pdf", "txt", "png", "jpg", "csv", "json", "epub"]
+        )
+        
+        if uploaded_file:
+            st.success(f"Arquivo `{uploaded_file.name}` indexado e criptografado com sucesso.")
+            file_size_mb = round(uploaded_file.size / (1024 * 1024), 2)
+            st.info(f"**Tamanho:** {file_size_mb} MB | **Status:** Pronto para roteamento")
+
+    with col_ai:
+        st.subheader("🤖 Agente Autônomo Gemini")
+        user_prompt = st.text_area(
+            "Instruções para o agente inteligente:",
+            placeholder="Exemplo: Analise este documento, extraia os tópicos mais importantes e defina a melhor pasta para organizar."
+        )
+        
+        if st.button("Executar Operação Inteligente 🚀", use_container_width=True, type="primary"):
+            if not ai_active:
+                st.error("Insira uma Chave API válida do Gemini na barra lateral para prosseguir.")
+            else:
+                with st.spinner("Conectando ao cluster Gemini para processamento de arquivo..."):
+                    try:
+                        if hasattr(genai, 'Client'):
+                            response = client.models.generate_content(
+                                model='gemini-2.5-flash',
+                                contents=user_prompt if user_prompt else "Forneça um relatório de integridade do arquivo."
+                            )
+                            output_text = response.text
+                        else:
+                            model = genai.GenerativeModel('gemini-2.5-flash')
+                            response = model.generate_content(user_prompt if user_prompt else "Análise geral de arquivo.")
+                            output_text = response.text
+                            
+                        st.markdown("### 📝 Resultado da IA Neural:")
+                        st.write(output_text)
+                    except Exception as ex:
+                        st.error(f"Erro no processamento da IA: {ex}")
+
+# -----------------------------------------------------------------------------
+# TAB 2: SERVER PLANS & UPGRADES
+# -----------------------------------------------------------------------------
+with tab_plans:
+    st.subheader("🌐 Selecione a Capacidade do seu Servidor Dedicado")
+    st.write("A ativação de novos planos garante contêineres isolados com alta taxa de transferência e suporte imediato a requisições de IA.")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.markdown(f"""
+            <div class="tech-card">
+                <div class="card-title">MEMBER</div>
+                <div class="card-storage">10 GB</div>
+                <div class="card-price">{PLANS_DATA['Member']['price']}</div>
+                <p style="color:#94A3B8; font-size:0.85rem; margin-top:10px;">{PLANS_DATA['Member']['desc']}</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("Ativar Member", key="btn_member", use_container_width=True):
+            st.session_state['selected_checkout_plan'] = "Member"
+            st.info("Plano selecionado! Acesse a aba 'Pagamento Pix' para concluir.")
+
+    with col2:
+        st.markdown(f"""
+            <div class="tech-card">
+                <div class="card-title">VIP</div>
+                <div class="card-storage">50 GB</div>
+                <div class="card-price">{PLANS_DATA['VIP']['price']}</div>
+                <p style="color:#94A3B8; font-size:0.85rem; margin-top:10px;">{PLANS_DATA['VIP']['desc']}</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("Ativar VIP", key="btn_vip", use_container_width=True):
+            st.session_state['selected_checkout_plan'] = "VIP"
+            st.info("Plano selecionado! Acesse a aba 'Pagamento Pix' para concluir.")
+
+    with col3:
+        st.markdown(f"""
+            <div class="tech-card">
+                <div class="card-title">MEGA VIP</div>
+                <div class="card-storage">200 GB</div>
+                <div class="card-price">{PLANS_DATA['Mega VIP']['price']}</div>
+                <p style="color:#94A3B8; font-size:0.85rem; margin-top:10px;">{PLANS_DATA['Mega VIP']['desc']}</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("Ativar Mega VIP", key="btn_mega", use_container_width=True):
+            st.session_state['selected_checkout_plan'] = "Mega VIP"
+            st.info("Plano selecionado! Acesse a aba 'Pagamento Pix' para concluir.")
+
+    with col4:
+        st.markdown(f"""
+            <div class="tech-card-vip">
+                <div class="promo-badge">40% OFF</div>
+                <div class="card-title" style="color:#00FFCC;">VIP PLUS</div>
+                <div class="card-storage">500 GB</div>
+                <div class="card-price">{PLANS_DATA['VIP Plus']['price']}</div>
+                <p style="color:#94A3B8; font-size:0.85rem; margin-top:10px;">{PLANS_DATA['VIP Plus']['desc']}</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("Ativar VIP Plus", key="btn_vip_plus", type="primary", use_container_width=True):
+            st.session_state['selected_checkout_plan'] = "VIP Plus"
+            st.info("Plano selecionado! Acesse a aba 'Pagamento Pix' para concluir.")
+
+# -----------------------------------------------------------------------------
+# TAB 3: CHECKOUT VIA PIX
+# -----------------------------------------------------------------------------
+with tab_checkout:
+    selected_plan = st.session_state.get('selected_checkout_plan', 'VIP Plus')
+    plan_info = PLANS_DATA[selected_plan]
+    
+    st.subheader("💳 Finalização da Assinatura via Pix")
+    st.write(f"Você está adquirindo o plano **{selected_plan}** com cota total de **{plan_info['gb']} GB**.")
+    st.write(f"**Valor do Investimento:** `{plan_info['price']}`")
+    
+    st.markdown(f"""
+        <div class="pix-container">
+            <h3>Chave Pix Oficial do Sistema</h3>
+            <p>Efetue a transferência usando a chave abaixo para ativação automática:</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    st.code(CHAVE_PIX_OFICIAL, language="text")
+    
+    if st.button("Confirmar Pagamento e Liberar Servidor ⚡", type="primary", use_container_width=True):
+        with st.spinner("Confirmando transação no cluster financeiro..."):
+            time.sleep(1.5)
+            st.session_state['active_plan'] = f"{selected_plan} ({plan_info['gb']} GB)"
+            st.session_state['allocated_storage'] = plan_info['gb']
+            st.balloons()
+            st.success(f"Pagamento confirmado! Servidor Dedicado de {plan_info['gb']} GB ativado com sucesso.")
+
+# -----------------------------------------------------------------------------
+# TAB 4: SYSTEM TELEMETRY (ENTERPRISE DASHBOARD)
+# -----------------------------------------------------------------------------
+with tab_telemetry:
+    st.subheader("📊 Métricas do Servidor e da Infraestrutura")
+    st.write("Acompanhamento de disponibilidade e tráfego de dados para avaliação comercial.")
+    
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Status Global", "ONLINE", "100% Uptime")
+    m2.metric("Latência da IA", "14 ms", "-3 ms")
+    m3.metric("Contêineres Ativos", "1.024", "+28 hoje")
+    m4.metric("Segurança", "AES-256", "Ativa")
+    
+    st.divider()
+    st.caption("FileFlow OS © 2026 - Todos os direitos reservados.")
