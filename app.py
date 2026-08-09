@@ -1263,3 +1263,118 @@ with tab_telemetry:
     
     st.divider()
     st.caption("FileFlow OS © 2026 - Todos os direitos reservados.")
+import streamlit as st
+import time
+
+# TRATAMENTO DE IMPORTAÇÃO SEGURA DA IA
+try:
+    import google.generativeai as genai
+    IA_INSTALADA = True
+except ImportError:
+    IA_INSTALADA = False
+
+# CONFIGURAÇÃO DA PÁGINA
+st.set_page_config(
+    page_title="FileFlow | Neural Cloud OS",
+    page_icon="⚡",
+    layout="wide"
+)
+
+# CHAVE PIX (Insira sua chave Pix aleatória ou CPF entre as aspas)
+CHAVE_PIX_OFICIAL = "8ded5989-4158-4171-d-a917-ca4ead431fd7"
+
+# ESTILIZAÇÃO CSS
+st.markdown("""
+    <style>
+    .stApp { background-color: #030712; color: #F3F4F6; }
+    .hero-banner {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.8));
+        border: 1px solid rgba(0, 255, 204, 0.3);
+        border-radius: 20px;
+        padding: 25px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 900;
+        background: linear-gradient(90deg, #00FFCC, #3B82F6, #9333EA);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# BARRA LATERAL
+with st.sidebar:
+    st.title("⚡ FileFlow v1.0")
+    st.caption("Painel do Servidor")
+    
+    st.subheader("🔑 Conexão IA")
+    api_key = st.text_input("API Key do Gemini:", type="password")
+    
+    if api_key:
+        if IA_INSTALADA:
+            try:
+                genai.configure(api_key=api_key)
+                st.success("IA Gemini Conectada!")
+            except Exception as e:
+                st.error(f"Erro na API: {e}")
+        else:
+            st.warning("Biblioteca 'google-generativeai' pendente no servidor, mas o app funcionará normalmente.")
+
+# CABEÇALHO
+st.markdown("""
+    <div class="hero-banner">
+        <h1 class="hero-title">FILEFLOW // NEURAL CLOUD OS</h1>
+        <p style="color:#94A3B8;">Gerenciador Autônomo de Arquivos com Suporte a IA</p>
+    </div>
+""", unsafe_allow_html=True)
+
+# ABAS DO APLICATIVO
+tab1, tab2, tab3 = st.tabs(["📂 Enviar & Processar", "🚀 Planos & Servidores", "💳 Pagamento Pix"])
+
+with tab1:
+    st.subheader("Envio de Arquivos")
+    arquivo = st.file_uploader("Selecione um arquivo:", type=["pdf", "txt", "png", "jpg", "csv"])
+    if arquivo:
+        st.success(f"Arquivo '{arquivo.name}' carregado!")
+    
+    st.divider()
+    st.subheader("Processador IA")
+    instrucao = st.text_area("Instruções para o sistema:")
+    if st.button("Executar Processamento 🚀", type="primary"):
+        if not IA_INSTALADA:
+            st.info("O módulo de IA não está instalado no servidor no momento. Adicione 'google-generativeai' no arquivo requirements.txt para ativar o processamento em tempo real.")
+        elif not api_key:
+            st.error("Insira a chave da API do Gemini no painel lateral.")
+        else:
+            with st.spinner("Processando..."):
+                try:
+                    model = genai.GenerativeModel('gemini-2.5-flash')
+                    res = model.generate_content(instrucao if instrucao else "Análise do sistema.")
+                    st.write(res.text)
+                except Exception as err:
+                    st.error(f"Falha ao consultar IA: {err}")
+
+with tab2:
+    st.subheader("Selecione o Servidor")
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.info("**MEMBER**\n\n10 GB — R$ 5,00/mês")
+    with c2:
+        st.info("**VIP**\n\n50 GB — R$ 10,00/mês")
+    with c3:
+        st.info("**MEGA VIP**\n\n200 GB — R$ 40,00/mês")
+    with c4:
+        st.success("**VIP PLUS**\n\n500 GB — R$ 60,00/mês")
+
+with tab3:
+    st.subheader("Chave Pix Oficial")
+    st.write("Copie a chave abaixo para realizar a transferência:")
+    st.code(CHAVE_PIX_OFICIAL, language="text")
+    
+    if st.button("Confirmar Pagamento ⚡", type="primary"):
+        st.balloons()
+        st.success("Pagamento recebido! Servidor ativado.")
