@@ -1,7 +1,11 @@
 import streamlit as st
 
-# CHAVE PIX FIXA E DADOS DOS PLANOS
-CHAVE_PIX_OFICIAL = "8ded9989-4158-4171-a917-ca6ea4d31fd7"
+# BUSCA A CHAVE PIX DOS SECRETS DO STREAMLIT DE FORMA SEGURA
+try:
+    CHAVE_PIX_OFICIAL = st.secrets["CHAVE_PIX_OFICIAL"]
+except Exception:
+    CHAVE_PIX_OFICIAL = "8ded9989-4158-4171-a917-ca6ea4d31fd7"
+
 
 PLANS_DATA = {
     "Member": {
@@ -29,3 +33,4 @@ PLANS_DATA = {
         "desc": "Servidor Neural Exclusivo",
     },
 }
+
