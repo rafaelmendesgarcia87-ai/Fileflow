@@ -1,0 +1,50 @@
+import streamlit as st
+
+def apply_custom_css():
+    st.markdown(
+        """
+        <style>
+        .stApp {
+            background-color: #030712;
+            color: #f3f4f6;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        .hero-banner {
+            background: linear-gradient(135deg, #0d9488, #00FFCC, #38b2ac);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .hero-title {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #000;
+            margin: 0;
+        }
+        .hero-subtitle {
+            font-size: 1rem;
+            color: #111827;
+            margin-top: 5px;
+        }
+        .server-card {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid #1e293b;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+        .badge-promo {
+            background-color: #EC4899;
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 12px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
