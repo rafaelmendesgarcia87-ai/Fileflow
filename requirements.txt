@@ -1,3 +1,5 @@
 streamlit
 google-genai
 boto3
+streamlit
+google-generativeai
