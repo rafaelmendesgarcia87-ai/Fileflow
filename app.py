@@ -149,7 +149,7 @@ PLANS_DATA = {
     "VIP Plus": {"gb": 500, "price": "R$ 60,00/mês", "badge": "Desconto 40%", "desc": "Servidor Neural Exclusivo"},
 }
 
-# ---------------------------------------------------------
+)# ---------------------------------------------------------
 # CONFIGURAÇÃO DA PÁGINA (ESTILO NETFLIX)
 # ---------------------------------------------------------
 st.set_page_config(
@@ -191,7 +191,7 @@ st.markdown("""
 }
 .card-netflix {
     background-color: #181818;
-    border-radius: 8px;
+                                                border-radius: 8px;
     padding: 20px;
     border: 1px solid #2f2f2f;
     transition: transform 0.2s ease-in-out;
@@ -311,4 +311,4 @@ with tab_checkout:
         with st.spinner("Verificando transação..."):
             time.sleep(1.5)
             st.balloons()
-            st.success(f"Servidor '{plano_atual}' de {gb_atual} GB ativado com sucesso após a assinatura!")
+            st.success(f"Servidor '{plano_atual}' de {gb_atual} GB ativado com sucesso após a assinatura!"
