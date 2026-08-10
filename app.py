@@ -149,65 +149,90 @@ PLANS_DATA = {
     "VIP Plus": {"gb": 500, "price": "R$ 60,00/mês", "badge": "Desconto 40%", "desc": "Servidor Neural Exclusivo"},
 }
 
-)# ---------------------------------------------------------
-# CONFIGURAÇÃO DA PÁGINA (ESTILO NETFLIX)
+import streamlit as st
+import time
+
+# ---------------------------------------------------------
+# CONFIGURAÇÃO DE SEGURANÇA DA CHAVE PIX (OCULTA NO CÓDIGO)
+# ---------------------------------------------------------
+try:
+    CHAVE_PIX_OFICIAL = st.secrets["CHAVE_PIX_OFICIAL"]
+except Exception:
+    CHAVE_PIX_OFICIAL = "Chave Pix configurada nos Secrets"
+
+# IMPORTAÇÃO SEGURA DA IA GEMINI
+try:
+    import google.generativeai as genai
+    IA_DISPONIVEL = True
+except ImportError:
+    IA_DISPONIVEL = False
+
+# DADOS DOS PLANOS E SERVIDORES (INCLUINDO PLANO ADM DE 500 GB)
+PLANS_DATA = {
+    "ADM / Google": {"gb": 500, "price": "R$ 0,00 (Acesso ADM)", "badge": "Administrador", "desc": "Servidor Dedicado de Alta Performance"},
+    "Member": {"gb": 10, "price": "R$ 5,00/mês", "badge": "Básico", "desc": "Container Estandard Isolado"},
+    "VIP": {"gb": 50, "price": "R$ 10,00/mês", "badge": "Popular", "desc": "Processamento Prioritário"},
+    "Mega VIP": {"gb": 200, "price": "R$ 40,00/mês", "badge": "Avançado", "desc": "Cluster de Alta Banda"},
+    "VIP Plus": {"gb": 500, "price": "R$ 60,00/mês", "badge": "Desconto 40%", "desc": "Servidor Neural Exclusivo"},
+}
+
+# ---------------------------------------------------------
+# CONFIGURAÇÃO DA PÁGINA
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="FileFlow | Catalog & Neural Cloud",
-    page_icon="🎬",
+    page_title="FileFlow v1.0 | Neural Cloud OS",
+    page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# DESIGN CSS ESTILO NETFLIX
+# ESTILO VISUAL MODERNO
 st.markdown("""
 <style>
 .stApp {
-    background-color: #141414;
-    color: #FFFFFF;
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: #0f172a;
+    color: #f8fafc;
+    font-family: 'Inter', system-ui, sans-serif;
 }
-.netflix-hero {
-    background: linear-gradient(180deg, rgba(20,20,20,0.2) 0%, #141414 100%), url('https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?q=80&w=1200');
-    background-size: cover;
-    background-position: center;
-    padding: 40px;
-    border-radius: 12px;
-    margin-bottom: 30px;
-    border-left: 6px solid #E50914;
+.hero-banner {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border: 1px solid #334155;
+    padding: 30px;
+    border-radius: 16px;
+    text-align: center;
+    margin-bottom: 25px;
+    border-left: 6px solid #e11d48;
 }
-.netflix-title {
-    font-size: 3rem;
+.hero-title {
+    font-size: 2.5rem;
     font-weight: 800;
-    color: #E50914;
-    text-transform: uppercase;
-    letter-spacing: 2px;
+    color: #ffffff;
     margin: 0;
 }
-.netflix-subtitle {
-    font-size: 1.2rem;
-    color: #E5E5E5;
+.hero-subtitle {
+    font-size: 1.1rem;
+    color: #94a3b8;
     margin-top: 5px;
 }
-.card-netflix {
-    background-color: #181818;
-                                                border-radius: 8px;
+.server-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
     padding: 20px;
-    border: 1px solid #2f2f2f;
-    transition: transform 0.2s ease-in-out;
     text-align: center;
 }
-.card-netflix:hover {
-    border-color: #E50914;
+.server-card:hover {
+    border-color: #e11d48;
 }
-.badge-netflix {
-    background-color: #E50914;
+.badge-red {
+    background-color: #e11d48;
     color: white;
     font-size: 0.75rem;
     font-weight: bold;
-    padding: 4px 8px;
-    border-radius: 4px;
-    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-bottom: 10px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -216,10 +241,10 @@ st.markdown("""
 # PAINEL LATERAL
 # ---------------------------------------------------------
 with st.sidebar:
-    st.markdown("<h2 style='color:#E50914;'>FILEFLOW</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#e11d48;'>⚡ FileFlow v1.0</h2>", unsafe_allow_html=True)
     st.subheader("Configurações do Servidor")
     
-    api_key_input = st.text_input("Chave API Gemini:", type="password", help="Insira sua chave para ativar os recursos avançados de IA")
+    api_key_input = st.text_input("Chave API Gemini:", type="password", help="Insira sua chave para ativar os recursos de IA")
     
     if api_key_input:
         if IA_DISPONIVEL:
@@ -233,9 +258,9 @@ with st.sidebar:
 
 # BANNER PRINCIPAL
 st.markdown("""
-<div class="netflix-hero">
-    <h1 class="netflix-title">FileFlow</h1>
-    <p class="netflix-subtitle">Gerenciador de Arquivos Inteligente | Plataforma em Estilo Streaming</p>
+<div class="hero-banner">
+    <h1 class="hero-title">FileFlow v1.0</h1>
+    <p class="hero-subtitle">Gerenciador de Arquivos Autônomo e Infraestrutura IA</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -246,7 +271,7 @@ tab_ia, tab_servidores, tab_checkout = st.tabs(["🤖 Processador & IA Central",
 # ABA 1: PROCESSADOR & IA
 # ---------------------------------------------------------
 with tab_ia:
-    st.subheader(" Central de Inteligência Artificial")
+    st.subheader("Central de Processamento de Arquivos")
     col_up, col_ai = st.columns([1, 1], gap="large")
     
     with col_up:
@@ -255,8 +280,8 @@ with tab_ia:
             st.success(f"Arquivo '{uploaded_file.name}' carregado e pronto para uso no seu servidor.")
             
     with col_ai:
-        user_prompt = st.text_area("Comando para a IA:", placeholder="Ex: Resuma o documento, extraia tabelas ou analise o conteúdo...")
-        if st.button(" Executar com IA", type="primary"):
+        user_prompt = st.text_area("Instruções para a IA:", placeholder="Ex: Resuma o documento, extraia tabelas ou analise o conteúdo...")
+        if st.button("Executar Ação com IA", type="primary"):
             if api_key_input and IA_DISPONIVEL:
                 with st.spinner("A IA está processando seus dados..."):
                     try:
@@ -274,25 +299,25 @@ with tab_ia:
 # ABA 2: CATÁLOGO DE SERVIDORES
 # ---------------------------------------------------------
 with tab_servidores:
-    st.subheader("Escolha ou Gerencie seu Servidor")
+    st.subheader("Gerenciar Capacidade dos Servidores")
     cols = st.columns(len(PLANS_DATA))
     
-    for col, (plan_name, info) in zip(cols, PLANS_DATA.items()):
-        with col:
+    for idx, (plan_name, info) in enumerate(PLANS_DATA.items()):
+        with cols[idx]:
             st.markdown(f"""
-            <div class="card-netflix">
-                <span class="badge-netflix">{info['badge']}</span>
-                <h3 style="margin-top:10px;">{plan_name}</h3>
+            <div class="server-card">
+                <span class="badge-red">{info['badge']}</span>
+                <h3>{plan_name}</h3>
                 <p><b>{info['gb']} GB</b> Armazenamento</p>
-                <p style="color:#E50914; font-weight:bold;">{info['price']}</p>
+                <p style="color:#e11d48; font-weight:bold;">{info['price']}</p>
                 <p><small>{info['desc']}</small></p>
             </div>
             """, unsafe_allow_html=True)
             
-            if st.button(f"Selecionar {plan_name}", key=f"btn_{plan_name}"):
+            if st.button(f"Ativar {plan_name}", key=f"btn_server_{idx}"):
                 st.session_state['plano_ativo'] = plan_name
                 st.session_state['gb_limite'] = info['gb']
-                st.success(f"Servidor {plan_name} ({info['gb']} GB) selecionado!")
+                st.success(f"Servidor {plan_name} ({info['gb']} GB) ativado!")
 
 # ---------------------------------------------------------
 # ABA 3: ATIVAÇÃO VIA PIX
@@ -302,13 +327,13 @@ with tab_checkout:
     plano_atual = st.session_state.get('plano_ativo', 'VIP Plus')
     gb_atual = st.session_state.get('gb_limite', 500)
     
-    st.markdown(f"**Servidor Selecionado:** <span style='color:#E50914; font-weight:bold;'>{plano_atual} ({gb_atual} GB)</span>", unsafe_allow_html=True)
+    st.markdown(f"**Servidor Selecionado:** <span style='color:#e11d48; font-weight:bold;'>{plano_atual} ({gb_atual} GB)</span>", unsafe_allow_html=True)
     st.write("Copie a chave Pix abaixo para realizar a transferência no app do seu banco:")
     
     st.code(CHAVE_PIX_OFICIAL, language="text")
     
-    if st.button("Confirmar Pagamento e Liberar Servidor", type="primary"):
+    if st.button("Confirmar Pagamento e Liberar Servidor", type="primary", key="btn_confirmar_pix"):
         with st.spinner("Verificando transação..."):
             time.sleep(1.5)
             st.balloons()
-            st.success(f"Servidor '{plano_atual}' de {gb_atual} GB ativado com sucesso após a assinatura!"
+            st.success(f"Servidor '{plano_atual}' de {gb_atual} GB liberado com sucesso!")
